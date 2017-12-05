@@ -24,16 +24,18 @@
   when: ansible_distribution == "Ubuntu"
   
 - name: make temp ssl file
-  shell: openssl s_client -host {{ ldap_uri }} -port 636 -showcerts >> /tmp/{{ ldap_uri }}.pem
-    
-  
+  shell: openssl s_client -host {{ ldap_uri }} -port 636 -showcerts > /tmp/{{ ldap_uri }}.pem
+  changed_when: False
+
 - name: ssl cert copied
   copy:
     src: /tmp/{{ ldap_uri }}.pem
     dest: /etc/ssl/certs/{{ ldap_uri }}.pem
+    remote_src: yes
     owner: root
     group: root
     mode: 0644
+  delegate_to: "{{inventory_hostname}}"
 
 - template:
     src: sssd.conf.j2
