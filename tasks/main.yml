@@ -21,6 +21,7 @@
     - libpam-sss
     - libnss-sss
     - libnss-ldap
+    - openssl
   when: ansible_distribution == "Ubuntu"
   
 - name: make temp ssl file
