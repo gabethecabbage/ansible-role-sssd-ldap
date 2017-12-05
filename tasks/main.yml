@@ -1,0 +1,68 @@
+---
+- name: sssd, authconfig and openldap-clients installed (RedHat)
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openldap-clients
+    - sssd
+    - authconfig
+    - oddjob-mkhomedir
+    - openssl
+  when: ansible_os_family == "RedHat"
+
+- name: sssd, libnss and ldap-utils installed (Ubuntu)
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - sssd
+    - ldap-utils
+    - libpam-sss
+    - libnss-sss
+    - libnss-ldap
+  when: ansible_distribution == "Ubuntu"
+  
+- name: make temp ssl file
+  shell: openssl s_client -host {{ ldap_uri }} -port 636 -showcerts >> /tmp/{{ ldap_uri }}.pem
+    
+  
+- name: ssl cert copied
+  copy:
+    src: /tmp/{{ ldap_uri }}.pem
+    dest: /etc/ssl/certs/{{ ldap_uri }}.pem
+    owner: root
+    group: root
+    mode: 0644
+
+- template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    owner: root
+    group: root
+    mode: 0600
+  notify: sssd_changed
+
+- meta: flush_handlers
+
+- name: selinux is set to permissive (RedHat)
+  selinux:
+    state: disabled
+  when: ansible_os_family == "RedHat"
+
+- name: oddjob-mkhomedir is added to pam (RedHat)
+  lineinfile:
+    path: "{{ item }}"
+    line: session     optional      pam_oddjob_mkhomedir.so skel=/etc/skel
+  with_items:
+    - /etc/pam.d/system-auth
+    - /etc/pam.d/password-auth
+  notify: oddjob_mkhomedir_changed
+  when: ansible_os_family == "RedHat"
+
+- name: oddjob-mkhomedir is added to pam (Ubuntu)
+  lineinfile:
+    path: /etc/pam.d/common-session
+    line: session    required    pam_mkhomedir.so skel=/etc/skel/ umask=0022
+  when: ansible_distribution == "Ubuntu"
+...

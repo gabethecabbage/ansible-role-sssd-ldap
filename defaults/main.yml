@@ -1,0 +1,2 @@
+ldap_schema: rfc2307bis
+usernames_case_sensitive: True

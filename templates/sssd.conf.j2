@@ -1,0 +1,36 @@
+[domain/default]
+autofs_provider = ldap
+ldap_schema = {{ ldap_schema }}
+ldap_search_base = {{ ldap_search_base }}
+id_provider = ldap
+auth_provider = ldap
+chpass_provider = ldap
+access_provider = ldap
+ldap_uri = ldap://{{ ldap_uri }}
+ldap_id_use_start_tls = False
+cache_credentials = True
+ldap_tls_cacert = /etc/ssl/certs/{{ ldap_uri }}.pem
+ldap_access_filter = (|{% for user in ldap_users %}(cn={{ user }}){% endfor %}{% if ldap_groups is defined %}{% for group in ldap_groups %}(groupMembership={{ group }}){% endfor %}{% endif %})
+case_sensitive = {{ usernames_case_sensitive }}
+
+[sssd]
+services = nss, pam, autofs
+domains = default
+
+[nss]
+homedir_substring = /home
+
+[pam]
+
+[sudo]
+
+[autofs]
+
+[ssh]
+
+[pac]
+
+[ifp]
+
+[secrets]
+
